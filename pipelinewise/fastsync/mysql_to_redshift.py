@@ -121,13 +121,14 @@ def sync_table(table):
         LOCK.acquire()
         try:
             utils.save_state_file(args.state, table, bookmark)
+            # Table loaded, grant select on all tables in target schema
+            grantees = utils.get_grantees(args.target, table)
+            utils.grant_privilege(target_schema, grantees, redshift.grant_usage_on_schema)
+            utils.grant_privilege(target_schema, grantees, redshift.grant_select_on_schema)
+
         finally:
             LOCK.release()
 
-        # Table loaded, grant select on all tables in target schema
-        grantees = utils.get_grantees(args.target, table)
-        utils.grant_privilege(target_schema, grantees, redshift.grant_usage_on_schema)
-        utils.grant_privilege(target_schema, grantees, redshift.grant_select_on_schema)
 
     except Exception as exc:
         LOGGER.exception(exc)
